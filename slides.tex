@@ -48,17 +48,15 @@
 \addtocounter{framenumber}{-1}
 
 % You can declare different parts as a parentof sections
-\begin{frame}{Part I: What is Ensemble Learning?}
+\begin{frame}{Index of the presentation}
     \tableofcontents[part=1]
-\end{frame}
-\begin{frame}{Part II: Demo Presentation Part 2}
     \tableofcontents[part=2]
 \end{frame}
 
 \makepart{What is Ensemble Learning?}
 
 \justifying
-\section{Introduction}
+\section{what is Ensemble Learning?}
 \subsection{An overview}
 \begin{frame}
     Given a \emphasize{\textbf{supervised learning algorithm}} \(\mathcal{A}(\mathcal{D})\,:\,\mathcal{X}\to\mathcal{Y}\), can we run it more than once on datasets constructed from the original one \(\mathcal{D}\) and then combine the results to get an overall better predictor? Kind of.
@@ -106,10 +104,11 @@
     \end{itemize} 
 \end{frame}
 
+\makepart{Averaging/Bagging}
 \section{Averaging/Bagging}
 \subsection{The framework}
 \begin{frame}
-    We will consider \alert{\textbf{linear regression}} with square loss where we have an explicit \example{\textbf{variance/bias}} decomposition.
+    We will consider \alert{\textbf{regression with square loss}} where we have an explicit \example{\textbf{variance/bias}} decomposition.
     \begin{itemize}
         \item most results extend to other situations using convex surrogates.
     \end{itemize}
@@ -130,51 +129,13 @@
         \item \(\text{bias}^{(j)}(x)=\mathbb{E}\left[\hat{f}^{(j)}(x)\right]-f_*(x)\);
         \item \(\text{var}^{(j)}(x)=\text{var}\left[\hat{f}^{(j)}(x)\right]\);
     \end{itemize}
-    where we assume that \(x\) is fixed, thus the expectations are taken with respect to the data only.
+    where we assume that \(x\) is fixed, thus the expectations are taken with respect to the data only. Note that:
+    \begin{itemize}
+        \item \(\text{bias}^{\text{bag}}(x)=\text{bias}^{(j)}(x)\) for any \(i=1,\dots,\,m\);
+        \item \(\text{var}^{\text{bag}}(x)=\text{bias}^{(j)}(x)\) for any \(i=1,\dots,\,m\);
+    \end{itemize}
+    because of i.i.d. assumption. 
 \end{frame}
-
-\begin{frame}
-    Denoting \(\text{bias}^{\text{bag}}(x)=\mathbb{E}\left[\hat{f}^{\text{bag}}(x)\right]-f_*(x)\), note that:
-    \[
-        \begin{aligned}
-            \text{bias}^{\text{bag}}(x)&=\mathbb{E}\left[\hat{f}^{\text{bag}}(x)\right]-f_*(x)\\
-            &=\frac{1}{m}\sum_{j=1}^m \mathbb{E}\left[\hat{f}^{(j)}(x)\right]-f_*(x)\\
-            &=\frac{1}{m}\cdot m \left(\mathbb{E}\left[\hat{f}^{(i)}(x)\right]-f_*(x)\right)\\
-            &=\text{bias}^{(j)}(x),\quad \text{for any } i=1,\dots,\,m,
-        \end{aligned}
-    \]
-    because of the i.i.d. assumption. 
-\end{frame}
-
-\begin{frame}
-    Furthermore, denoting \(\text{var}^{\text{bag}}(x)=\text{var}\left[\hat{f}^{\text{bag}}(x)\right]\), note that:
-    \[
-        \begin{aligned}
-            \text{var}^{\text{bag}}(x)&=\text{var}\left[\hat{f}^{\text{bag}}(x)\right]\\
-            &=\text{var}\left[\hat{f}^{\text{bag}}(x)\right]\\
-            &=\frac{1}{m}\cdot m \left(\mathbb{E}\left[\hat{f}^{(i)}(x)\right]-f_*(x)\right)\\
-            &=\text{bias}^{(j)}(x),\quad \text{for any } i=1,\dots,\,m,
-        \end{aligned}
-    \]
-    because of the i.i.d. assumption. 
-\end{frame}
-
-\makepart{Demo Presentation Part 2}
-
-\section{Section}
-\subsection{Subsection}
-\subsubsection{Subsubsection}
-\subsubsection{Subsubsection}
-\subsection{Subsection}
-\subsubsection{Subsubsection}
-\subsubsection{Subsubsection}
-\section{Section}
-\subsection{Subsection}
-\subsubsection{Subsubsection}
-\subsubsection{Subsubsection}
-\subsection{Subsection}
-\subsubsection{Subsubsection}
-\subsubsection{Subsubsection}
 
 \begin{frame}[allowframebreaks]{References}
     \printbibliography
