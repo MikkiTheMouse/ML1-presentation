@@ -82,198 +82,81 @@
 
 \subsection{How to construct the datasets?}
 \begin{frame}
+    Suppose that \(\mathcal{D}\) is the original dataset. 
 
-	
-\end{frame}
-
-\subsection{Frames}
-\begin{frame}
-    Unless the user enters their own custom frame titles and subtitles, Elegant Slides automatically inserts the section title and, if specified, the subsection title as frame titles and frame subtitles.
-\end{frame}
-
-\begin{frame}{}{Custom Subsection}
-    This frame has a custom subtitle. The frame title is automatically inserted and corresponds to the section title.
-\end{frame}
-
-\begin{frame}{Custom Title}{Custom Subsection with Footnote}
-    This frame has a custom title and a custom subtitle.\footnote{This is a footnote. See also \citet{example_2022}. }
-\end{frame}
-
-\subsection{Fonts}
-\begin{frame}[fragile]
-\begin{itemize}
-\item Font types can be changed in loadslides.tex.
-    \item For lecture notes or reports, the \textit{Lecture} theme together with \verb +\RequirePackage{palatino}+ and \verb+\usefonttheme{serif}+ works well. 
-    \item For talks and other presentations, \verb+\RequirePackage[scaled]{helvet}+ with any of the other themes, such as \textit{Gold}, works better.
-    \item Text can be highlighted as follows:
+    We construct new datasets by assigning different weights to the data points. According to the weights' nature, they have different interpretations:
     \begin{itemize}
-        \item Regular
-        \item \emphasize{Emphasize}
-        \item \alert{Alert}
-        \item \example{Example}
-        \item \textit{Italic}
-        \item \textbf{Bold}
+        \item \alert{\textbf{integer-valued weights}}: the new dataset is obtained by including the points the number of times specified by the weights;
+        \item \alert{\textbf{(non-negative) real-valued weights}}: implemented by sampling points proportionally to their weights during training, effectively treating the normalized weight as a sampling probability (e.g., in \example{\textbf{SGD}});
+        \item \alert{\textbf{arbitrary weights}}: modern techniques based on empirical risk minimization directly accomodate arbitrary weights. 
     \end{itemize}
-\end{itemize}
-    
-\end{frame}
-
-\subsection{Lists}
-
-\begin{frame}
-    \begin{columns}[T,onlytextwidth]
-    \column{0.33\textwidth}
-      \textbf{Items}
-      \begin{itemize}
-        \item Cats 
-        \begin{itemize}
-            \item British Shorthair
-        \end{itemize}
-        \item Dogs \item Birds
-      \end{itemize}
-
-    \column{0.33\textwidth}
-      \textbf{Enumerations}
-      \begin{enumerate}
-        \item First 
-        \begin{enumerate}
-            \item First subpoint
-        \end{enumerate}
-        \item Second \item Last
-      \end{enumerate}
-
-    \column{0.33\textwidth}
-      \textbf{Descriptions}
-      \begin{description}
-        \item[Apples] Yes \item[Oranges] No \item[Grappes] No
-      \end{description}
-\end{columns}
-\end{frame}
-
-\subsection{Table}
-\begin{frame}
-    \begin{table}
-        \caption{Largest cities in the world (source: Wikipedia)}
-        \begin{tabular}{@{} lr @{}}
-          \toprule
-          City & Population\\
-          \midrule
-          Mexico City & 20,116,842\\
-          Shanghai & 19,210,000\\
-          Peking & 15,796,450\\
-          Istanbul & 14,160,467\\
-          \bottomrule
-        \end{tabular}
-        \hspace*{1cm}
-            \setlength\extrarowheight{3pt}
-        \begin{tabular}{|lr|}
-          \hline
-          \rowcolor{primary}\color{white}City & \color{white}Population\\
-          \hline
-          Mexico City & 20,116,842\\
-          Shanghai & 19,210,000\\
-          Peking & 15,796,450\\
-          Istanbul & 14,160,467\\
-          \hline
-        \end{tabular}
-    \end{table}
-\end{frame}
-
-\subsection{Figures}
-\begin{frame}
-    \begin{figure}[htbp]
-        \centering
-        \caption{Plot of $y=x^2$}
-        \begin{tikzpicture}
-            \begin{axis}[
-            legend columns=3,
-            legend style={at={(0.5,-0.3)},anchor=north},
-            width = \textwidth,
-            height = 2.5in,
-            xmin = -3, 
-            xmax = 3,
-            ymin = 0,
-            ymax = 10,
-            ]
-                \addplot[primary] {x^2};
-                        \addlegendentry{$x^2$}
-            \end{axis}
-        \end{tikzpicture}
-    \end{figure}
-
-\end{frame}
-
-\subsection{Blocks}
-\begin{frame}
-
-   \centering
-	\begin{minipage}[b]{0.5\textwidth}
-
-	  \begin{block}{Default}
-        Block content.
-      \end{block}
-
-      \begin{alertblock}{Alert}
-        Block content.
-      \end{alertblock}
-
-      \begin{exampleblock}{Example}
-        Block content.
-      \end{exampleblock}      
-      
-	\end{minipage}	
-\end{frame}
-
-\section{Maths}
-\subsection{Equations}
-\begin{frame}
+    We will focus on \example{\textbf{bagging/averaging}} techniques:
     \begin{itemize}
-        \item A numbered equation:
-        \begin{equation}
-            y_t = \beta x_t + \varepsilon_t
-        \end{equation}
-         \item Another equation:
-        \begin{equation*}
-            \mathbf{Y} = \boldsymbol{\beta} \mathbf{X} + \boldsymbol{\varepsilon}_t
-        \end{equation*}
+        \item datasets constructed in parallel with \alert{\textbf{random weights}} (typically uniform) or - which yields similar results - using \alert{\textbf{random projections}}.
     \end{itemize}
 \end{frame}
 
-\subsection{Theorem}
+\subsection{A spoiler: what are the computational and statistical benefits?}
 \begin{frame}
+    It really depends on the original predictors:
     \begin{itemize}
-        \item Theorems are numbered consecutively.
-    \end{itemize}
-    \begin{theorem}[Example Theorem]
-         Given a discrete random variable X, which takes values in the alphabet $\mathcal{X}$ and is distributed according to  $p:{\mathcal {X}}\to [0,1]$:
-            \begin{equation}
-                \mathrm {H} (X):=-\sum _{x\in {\mathcal {X}}}p(x)\log p(x)=\mathbb {E} [-\log p(X)]
-            \end{equation}
-    \end{theorem}
+        \item \alert{\textbf{local averaging methods}}: ensemble learning will typically \example{\textbf{reduce the variance}} of the predictor and parallalelization \example{\textbf{reduces the computational complexity}};
+        \item \alert{\textbf{empirical risk minimization with nonlinear models}}: linear combinations \example{\textbf{increase the set of models}} from \(\varphi(\cdot,\,w)\) to \(\int\limits_{\mathcal{W}}\varphi(x,\,w)\,\mathrm{d}\nu(w)\), where \(\nu\) is a signed measure on \(\mathcal{W}\). Furthermore, \example{\textbf{variance and computational cost are decreased}};
+        \item \alert{\textbf{empirical risk minimization with linear models}}: a linear combination of linear models will still be a linear models, thus not increasing the set of models. However, there are usually great \example{\textbf{computational benefits}}.
+    \end{itemize} 
 \end{frame}
 
-\begin{frame}{}{Definitions}
+\section{Averaging/Bagging}
+\subsection{The framework}
+\begin{frame}
+    We will consider \alert{\textbf{linear regression}} with square loss where we have an explicit \example{\textbf{variance/bias}} decomposition.
     \begin{itemize}
-        \item Definition numbers are prefixed by the section number in the respective part.
+        \item most results extend to other situations using convex surrogates.
     \end{itemize}
-     \begin{definition}[Example Definition]
-         Given a discrete random variable X, which takes values in the alphabet $\mathcal{X}$ and is distributed according to  $p:{\mathcal {X}}\to [0,1]$:
-            \begin{equation}
-                \mathrm {H} (X):=-\sum _{x\in {\mathcal {X}}}p(x)\log p(x)=\mathbb {E} [-\log p(X)]
-            \end{equation}
-    \end{definition}
 \end{frame}
 
-\begin{frame}{}{Examples}
+\subsection{Averaging: the idealized setting}
+\begin{frame}
+    Suppose we have \(m\) indipendent datasets of size \(n\), all coming from an i.i.d. sample having the same distribution \(p(x,\,y)\) on \(\mathcal{X}\times\mathcal{Y}\). From each of them, we get an estimator:
+    \[
+        \hat{f}^{(j)},\quad j=1,\dots,\,m,
+    \]
+    and the new predictor is:
+    \[
+        \hat{f}^{\text{bag}}(x) = \frac{1}{m} \sum_{j=1}^m \hat{f}^{(j)}(x).
+    \]
+    Denote:
     \begin{itemize}
-        \item Examples are numbered as definitions.
+        \item \(\text{bias}^{(j)}(x)=\mathbb{E}\left[\hat{f}^{(j)}(x)\right]-f_*(x)\);
+        \item \(\text{var}^{(j)}(x)=\text{var}\left[\hat{f}^{(j)}(x)\right]\);
     \end{itemize}
-    \begin{examp}[Example Theorem]
-         Given a discrete random variable X, which takes values in the alphabet $\mathcal{X}$ and is distributed according to  $p:{\mathcal {X}}\to [0,1]$:
-            \begin{equation}
-                \mathrm {H} (X):=-\sum _{x\in {\mathcal {X}}}p(x)\log p(x)=\mathbb {E} [-\log p(X)]
-            \end{equation}
-    \end{examp}
+    where we assume that \(x\) is fixed, thus the expectations are taken with respect to the data only.
+\end{frame}
+
+\begin{frame}
+    Denoting \(\text{bias}^{\text{bag}}(x)=\mathbb{E}\left[\hat{f}^{\text{bag}}(x)\right]-f_*(x)\), note that:
+    \[
+        \begin{aligned}
+            \text{bias}^{\text{bag}}(x)&=\mathbb{E}\left[\hat{f}^{\text{bag}}(x)\right]-f_*(x)\\
+            &=\frac{1}{m}\sum_{j=1}^m \mathbb{E}\left[\hat{f}^{(j)}(x)\right]-f_*(x)\\
+            &=\frac{1}{m}\cdot m \left(\mathbb{E}\left[\hat{f}^{(i)}(x)\right]-f_*(x)\right)\\
+            &=\text{bias}^{(j)}(x),\quad \text{for any } i=1,\dots,\,m,
+        \end{aligned}
+    \]
+    because of the i.i.d. assumption. 
+\end{frame}
+
+\begin{frame}
+    Furthermore, denoting \(\text{var}^{\text{bag}}(x)=\text{var}\left[\hat{f}^{\text{bag}}(x)\right]\), note that:
+    \[
+        \begin{aligned}
+            \text{var}^{\text{bag}}(x)&=\text{var}\left[\hat{f}^{\text{bag}}(x)\right]\\
+            &=\text{var}\left[\hat{f}^{\text{bag}}(x)\right]\\
+            &=\frac{1}{m}\cdot m \left(\mathbb{E}\left[\hat{f}^{(i)}(x)\right]-f_*(x)\right)\\
+            &=\text{bias}^{(j)}(x),\quad \text{for any } i=1,\dots,\,m,
+        \end{aligned}
+    \]
+    because of the i.i.d. assumption. 
 \end{frame}
 
 \makepart{Demo Presentation Part 2}
