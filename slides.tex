@@ -137,6 +137,61 @@
     because of i.i.d. assumption. 
 \end{frame}
 
+\section{Random projections and averaging}
+\begin{frame}
+    In the previous section observation were reweighted to be able to re-run the original algorithm, this can also be done through \alert{\textbf{random projection}}. This can be done in several ways:
+    \begin{itemize}
+        \item  \example{\textbf{Sketching}}: replacing \(\min_{\theta \in \mathbb{R}^d}\|y - \Phi\theta \|^2_2 \) by \(\min_{\theta \in \mathbb{R}^s}\|Sy - S\Phi\theta \|^2_2 \) where \(S \in \mathbb{R}^{s \times n}, \; n > s > d\) is an i.i.d Gaussian matrix. The matrix S has dimension \(s \times n\) so we are trasforming the n observation in s "sketched" observations
+        \item  \example{\textbf{Random Projections}}: replacing \(\min_{\theta \in \mathbb{R}^d}\|y - \Phi\theta \|^2_2 \) by \(\min_{\eta \in \mathbb{R}^s}\|y - \Phi S \eta \|^2_2 \) where \(S \in \mathbb{R}^{d \times s}, \; d > n > s\) in this setting we are no longer searching the full $d$-dimensional spuse but a smaller $s$-dimensional subspace
+    \end{itemize}
+\end{frame}
+
+\subsection{Gaussian Sketching}
+
+\begin{frame}
+    We will consider a regression setting with design matrix $\Phi$ with rank $d$, which implies $n \ge d$, we consider $s > d$ Gaussian random projection with \(s << n\).
+    The goal is to compute \(\tfrac{1}{n}\mathbb{E}_{\epsilon, S}\|\Phi\hat{\theta} - \Phi \theta_*\|\), where \(\hat{\theta} = \tfrac{1}{m}\sum^m\hat{\theta}^{(j)}\) and \(\hat{\theta}^{(j)}\) is obtained using \(S^{(j)} \in \mathbb{R}^{s\times n}\) with $j=1,\dots,m$, where $m$ denotes the number of replications. 
+    \begin{align*}
+        \frac{1}{n} \mathbb{E}_{\varepsilon, S^{(j)}} \Bigg[ \bigg\| \frac{1}{m} \sum_{j=1}^m \Phi\hat{\theta}^{(j)} - \Phi\theta_* \bigg\|_2^2 \Bigg] &= \frac{1}{n} \mathbb{E}_{\varepsilon} \Bigg[ \bigg\| \frac{1}{m} \sum_{j=1}^m \mathbb{E}_{S^{(j)}} [\Phi\hat{\theta}^{(j)}] - \Phi\theta_* \bigg\|_2^2 \Bigg] + \frac{1}{nm} \mathbb{E}_{\varepsilon, S^{(1)}} \Big[ \big\|\Phi\hat{\theta}^{(1)} - \mathbb{E}_{S^{(1)}}\Phi\hat{\theta}^{(1)}\big\|_2^2 \Big] \\
+        &= \underbrace{\sigma^2 \frac{d}{n}}_{\text{Standard OLS Error}} + \underbrace{\sigma^2 \frac{d}{nm} \frac{n-d}{s-d-1}}_{\text{Algorithmic Skething Penalty}}
+    \end{align*}
+
+\end{frame}
+
+\begin{frame}
+    Let's look at the sketching penalty: $\sigma^2 \frac{d}{n} \times \left( \frac{1}{m} \frac{n-d}{s-d-1} \right)$.
+    \begin{itemize}
+        \item \textbf{As $m \to \infty$:} The penalty vanishes. Averaging an infinite number of sketches perfectly reconstructs the original OLS estimator. 
+        \item \textbf{As $s \to n$:} If we set $s=n$ so $\frac{n-d}{n-d-1} \approx 1$ the total error becomes $\sigma^2 \frac{d}{n} + \sigma^2 \frac{d}{n(1)} (1) = 2 \times \text{OLS Error}$. This means if you use a full-rank Gaussian transformation of your data without ensemble averaging ($m=1$), your expected error is roughly double the standard OLS error.
+        \item \textbf{Choosing $m$:} To match OLS up to a factor of 2 we need the penalty term to equal the base OLS term $\sigma^2 \frac{d}{n}$. 
+        \begin{align*}
+            \sigma^2 \frac{d}{nm} \frac{n-d}{s-d-1} &\approx \sigma^2 \frac{d}{n} \\
+            \frac{1}{m} \frac{n-d}{s-d-1} &\approx 1 \implies m \approx \frac{n-d}{s-d-1} \approx \frac{n}{s}
+        \end{align*}
+    This defines the computational trade-off. If you compress your rows by a factor of 10 ($s = 0.1n$), you must compute $m=10$ independent sketches and average them to retain the statistical accuracy of computing standard OLS once. 
+\end{itemize}
+\end{frame}
+
+\subsection{Random projections}
+
+\begin{frame}
+    We are still in a regression setting but we now assume that $d > n$ (high-dimensional set-up) and that the rank of $\Phi$ is $n$. For each $j \in \{1,\dots,m\}$, we consider a sketching matrix $S^{(j)} \in \mathbb{R}^{d \times s}$, for $s \le n$ sampled independently from a distribution to be determined (we only assume that almost surely, its rank is equal to $s$). We then consider $\hat{\eta}^{(j)}$ as a minimizer of $\min_{\eta \in \mathbb{R}^s} \|y - \Phi S^{(j)}\eta\|_2^2$. We assume that the matrix $\Phi S^{(j)}$ has rank $s$ and consider the average $\hat{\theta} = \frac{1}{m} \sum_{j=1}^m S^{(j)}\hat{\eta}^{(j)}$. As before we want to bound the quantity
+    \[\frac{1}{n} \mathbb{E}_{\varepsilon, S} \Bigg[ \bigg\| \frac{1}{m} \sum_{j=1}^m \hat{y}^{(j)} - \Phi\theta_* \bigg\|_2^2 \Bigg]\]
+\end{frame}
+
+\begin{frame}
+    Derivation of the bound:
+    \begin{align*}
+        &\frac{1}{n} \mathbb{E}_{\varepsilon, S} \Bigg[ \bigg\| \frac{1}{m} \sum_{j=1}^m \hat{y}^{(j)} - \Phi\theta_* \bigg\|_2^2 \Bigg] \\
+        &= \frac{1}{n} \mathbb{E}_{\varepsilon} \Bigg[ \big\| \mathbb{E}_{S^{(1)}} \big[ \hat{y}^{(1)} \big] - \Phi\theta_* \big\|_2^2 + \frac{1}{m} \mathbb{E}_{S^{(1)}} \big\| \hat{y}^{(1)} - \mathbb{E}_{S^{(1)}} \big[ \hat{y}^{(1)} \big] \big\|_2^2 \Bigg] \\
+        &\le \frac{\sigma^2 s}{n} + \frac{1}{n} \theta_*^\top \Phi^\top [I - \Delta] \Phi\theta_*
+    \end{align*}
+    Where \(\Delta = \mathbb{E}[\Pi] = \mathbb{E}[\Phi S(S^\top \Phi^\top \Phi S)^{-1}S^\top \Phi^\top]\), we can then use the following \(\theta_*^\top \Phi^\top [I - \Delta] \Phi\theta_* \le \theta_*^\top \Phi^\top \Big( I - \Phi \mathbb{E}_S \big[ SS^\top \big] \big( \mathbb{E}_S \big[ SS^\top \Phi^\top \Phi S S^\top \big] \big)^{-1} \mathbb{E}_S \big[ SS^\top \big] \Phi^\top \Big) \Phi\theta_*\) and in the case of Gaussian random projection using the fact that \(\mathbb{E}_S[SS^\top] = sI \text{ and } \mathbb{E}_S\big[SS^\top\Phi^\top\Phi SS^\top\big] = s(s+1)\Phi^\top\Phi + s\text{tr}(\Phi^\top\Phi)I\) we get \(\theta_*^\top \Phi^\top [I - \Delta] \Phi\theta_* \le 2 \text{tr}(\Phi^\top\Phi) \frac{\|\theta_*\|_2^2}{s+1}\) giving a final bound of the from
+    \[
+                \frac{1}{n} \mathbb{E}_{\varepsilon, S} \Bigg[ \bigg\| \frac{1}{m} \sum_{j=1}^m \hat{y}^{(j)} - \Phi\theta_* \bigg\|_2^2 \Bigg] \le \frac{\sigma^2 s}{n} + \frac{2}{n}\text{tr}(\Phi^\top\Phi)\frac{\|\theta_*\|_2^2}{s+1}
+    \]
+\end{frame}
+
 \begin{frame}[allowframebreaks]{References}
     \printbibliography
 \end{frame}
