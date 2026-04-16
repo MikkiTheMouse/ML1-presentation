@@ -200,57 +200,209 @@
     \alert{\textbf{Averaging}} over \(m\) replications, we get that the \example{\textbf{excess risk}} is proportional to \(\frac{\sigma^2}{nm}\lambda{-1/\alpha}+\lambda^{t/s}\), and again the estimator behaves like having \(N=nm\) observations.
 \end{frame}
 
-\makepart{Random projections and averaging}
-\section{Random projections and averaging}
+\makepart{The Two Paradigms: Sketching vs. Projection}
+
+\justifying
+\section{The Two Paradigms}
+\subsection{Overview of Data Compression}
 \begin{frame}
-    In the previous section observation were reweighted to be able to re-run the original algorithm, this can also be done through \alert{\textbf{random projection}}. This can be done in several ways:
+    In ordinary least-squares, when dealing with massive datasets, exact solutions require \(\mathcal{O}(nd^2)\) time. How can we use \emphasize{\textbf{random projections}} to speed this up or regularize the model?
+    
+    We consider two fundamental settings:
     \begin{itemize}
-        \item  \example{\textbf{Sketching}}: replacing \(\min_{\theta \in \mathbb{R}^d}\|y - \Phi\theta \|^2_2 \) by \(\min_{\theta \in \mathbb{R}^s}\|Sy - S\Phi\theta \|^2_2 \) where \(S \in \mathbb{R}^{s \times n}, \; n > s > d\) is an i.i.d Gaussian matrix. The matrix S has dimension \(s \times n\) so we are trasforming the n observation in s "sketched" observations
-        \item  \example{\textbf{Random Projections}}: replacing \(\min_{\theta \in \mathbb{R}^d}\|y - \Phi\theta \|^2_2 \) by \(\min_{\eta \in \mathbb{R}^s}\|y - \Phi S \eta \|^2_2 \) where \(S \in \mathbb{R}^{d \times s}, \; d > n > s\) in this setting we are no longer searching the full $d$-dimensional spuse but a smaller $s$-dimensional subspace
+        \item \alert{\textbf{Sketching (\(S \in \mathbb{R}^{s \times n}\))}}: shrinking the datapoints (rows). We compress \(n\) observations into \(s\) new observations (\(n > s > d\)) by replacing \(\min_{\theta \in \mathbb{R}^d}\|y - \Phi\theta \|^2_2 \) by \(\min_{\theta \in \mathbb{R}^s}\|Sy - S\Phi\theta \|^2_2 \) where \(S\) is an i.i.d Gaussian matrix.
+        \item \alert{\textbf{Random Projection (\(S \in \mathbb{R}^{d \times s}\))}}: shrinking the features (columns). We constrain our search space to an \(s\)-dimensional subspace (\(d > n > s\)) by replacing \(\min_{\theta \in \mathbb{R}^d}\|y - \Phi\theta \|^2_2 \) by \(\min_{\eta \in \mathbb{R}^s}\|y - \Phi S \eta \|^2_2 \).
     \end{itemize}
-\end{frame}
-
-\subsection{Gaussian Sketching}
-
-\begin{frame}
-    We will consider a regression setting with design matrix $\Phi$ with rank $d$, which implies $n \ge d$, we consider $s > d$ Gaussian random projection with \(s << n\).
-    The goal is to compute \(\tfrac{1}{n}\mathbb{E}_{\epsilon, S}\|\Phi\hat{\theta} - \Phi \theta_*\|\), where \(\hat{\theta} = \tfrac{1}{m}\sum^m\hat{\theta}^{(j)}\) and \(\hat{\theta}^{(j)}\) is obtained using \(S^{(j)} \in \mathbb{R}^{s\times n}\) with $j=1,\dots,m$, where $m$ denotes the number of replications. 
-    \begin{align*}
-        \frac{1}{n} \mathbb{E}_{\varepsilon, S^{(j)}} \Bigg[ \bigg\| \frac{1}{m} \sum_{j=1}^m \Phi\hat{\theta}^{(j)} - \Phi\theta_* \bigg\|_2^2 \Bigg] &= \frac{1}{n} \mathbb{E}_{\varepsilon} \Bigg[ \bigg\| \frac{1}{m} \sum_{j=1}^m \mathbb{E}_{S^{(j)}} [\Phi\hat{\theta}^{(j)}] - \Phi\theta_* \bigg\|_2^2 \Bigg] + \frac{1}{nm} \mathbb{E}_{\varepsilon, S^{(1)}} \Big[ \big\|\Phi\hat{\theta}^{(1)} - \mathbb{E}_{S^{(1)}}\Phi\hat{\theta}^{(1)}\big\|_2^2 \Big] \\
-        &= \underbrace{\sigma^2 \frac{d}{n}}_{\text{Standard OLS Error}} + \underbrace{\sigma^2 \frac{d}{nm} \frac{n-d}{s-d-1}}_{\text{Algorithmic Skething Penalty}}
-    \end{align*}
-
-\end{frame}
-
-\begin{frame}
-    Let's look at the sketching penalty: $\sigma^2 \frac{d}{n} \times \left( \frac{1}{m} \frac{n-d}{s-d-1} \right)$.
+    What are the primary benefits?
     \begin{itemize}
-        \item \textbf{As $m \to \infty$:} The penalty vanishes. Averaging an infinite number of sketches perfectly reconstructs the original OLS estimator. 
-        \item \textbf{As $s \to n$:} If we set $s=n$ so $\frac{n-d}{n-d-1} \approx 1$ the total error becomes $\sigma^2 \frac{d}{n} + \sigma^2 \frac{d}{n(1)} (1) = 2 \times \text{OLS Error}$. This means if you use a full-rank Gaussian transformation of your data without ensemble averaging ($m=1$), your expected error is roughly double the standard OLS error.
-        \item \textbf{Choosing $m$:} To match OLS up to a factor of 2 we need the penalty term to equal the base OLS term $\sigma^2 \frac{d}{n}$. 
-        \begin{align*}
-            \sigma^2 \frac{d}{nm} \frac{n-d}{s-d-1} &\approx \sigma^2 \frac{d}{n} \\
-            \frac{1}{m} \frac{n-d}{s-d-1} &\approx 1 \implies m \approx \frac{n-d}{s-d-1} \approx \frac{n}{s}
-        \end{align*}
-    This defines the computational trade-off. If you compress your rows by a factor of 10 ($s = 0.1n$), you must compute $m=10$ independent sketches and average them to retain the statistical accuracy of computing standard OLS once. 
+    \item \example{\textbf{Sketching}} provides computational and storage benefits (reducing \(\mathbb{R}^{n \times d}\) to \(\mathbb{R}^{s \times d}\)).
+    \item \example{\textbf{Random Projections}} provide both a reduction in computation time and inherent \example{\textbf{regularization}} in high-dimensional setups. 
 \end{itemize}
 \end{frame}
 
-\section{Random projections}
+\subsection{Connection to Random Forests}
 \begin{frame}
-    We are still in a regression setting but we now assume that $d > n$ (high-dimensional set-up) and that the rank of $\Phi$ is $n$. For each $j \in \{1,\dots,m\}$, we consider a sketching matrix $S^{(j)} \in \mathbb{R}^{d \times s}$, for $s \le n$ sampled independently from a distribution to be determined (we only assume that almost surely, its rank is equal to $s$). We then consider $\hat{\eta}^{(j)}$ as a minimizer of $\min_{\eta \in \mathbb{R}^s} \|y - \Phi S^{(j)}\eta\|_2^2$. We assume that the matrix $\Phi S^{(j)}$ has rank $s$ and consider the average $\hat{\theta} = \frac{1}{m} \sum_{j=1}^m S^{(j)}\hat{\eta}^{(j)}$. As before we want to bound the quantity
-    \[\frac{1}{n} \mathbb{E}_{\varepsilon, S} \Bigg[ \bigg\| \frac{1}{m} \sum_{j=1}^m \hat{y}^{(j)} - \Phi\theta_* \bigg\|_2^2 \Bigg]\]
+    How do these concepts map to well-known algorithms?
+    
+    \emphasize{\textbf{Random Forests}} represent the ultimate unification of these two dimensionality reduction concepts in classical machine learning:
+    \begin{itemize}
+        \item \alert{\textbf{Bagging/Subsampling}}: Every decision tree is trained on a bootstrapped sample of rows (analogous to Sketching).
+        \item \alert{\textbf{Feature Selection}}: At every node split, the algorithm selects a random subset of features (analogous to Random Projections).
+    \end{itemize}
+    This dual-randomization maximally decorrelates individual estimators, driving the \example{\textbf{variance term}} of the ensemble down far more effectively than bagging alone.
 \end{frame}
+
+\makepart{Gaussian Sketching}
+\section{Gaussian Sketching}
+\subsection{The Framework}
 \begin{frame}
-    Derivation of the bound:
-    \begin{align*}
-        &\frac{1}{n} \mathbb{E}_{\varepsilon, S} \Bigg[ \bigg\| \frac{1}{m} \sum_{j=1}^m \hat{y}^{(j)} - \Phi\theta_* \bigg\|_2^2 \Bigg] \\
-        &= \frac{1}{n} \mathbb{E}_{\varepsilon} \Bigg[ \big\| \mathbb{E}_{S^{(1)}} \big[ \hat{y}^{(1)} \big] - \Phi\theta_* \big\|_2^2 + \frac{1}{m} \mathbb{E}_{S^{(1)}} \big\| \hat{y}^{(1)} - \mathbb{E}_{S^{(1)}} \big[ \hat{y}^{(1)} \big] \big\|_2^2 \Bigg] \\
-        &\le \frac{\sigma^2 s}{n} + \frac{1}{n} \theta_*^\top \Phi^\top [I - \Delta] \Phi\theta_*
-    \end{align*}
-    Where \(\Delta = \mathbb{E}[\Pi] = \mathbb{E}[\Phi S(S^\top \Phi^\top \Phi S)^{-1}S^\top \Phi^\top]\), we can then use the following \(\theta_*^\top \Phi^\top [I - \Delta] \Phi\theta_* \le \theta_*^\top \Phi^\top \Big( I - \Phi \mathbb{E}_S \big[ SS^\top \big] \big( \mathbb{E}_S \big[ SS^\top \Phi^\top \Phi S S^\top \big] \big)^{-1} \mathbb{E}_S \big[ SS^\top \big] \Phi^\top \Big) \Phi\theta_*\) and in the case of Gaussian random projection using the fact that \(\mathbb{E}_S[SS^\top] = sI \text{ and } \mathbb{E}_S\big[SS^\top\Phi^\top\Phi SS^\top\big] = s(s+1)\Phi^\top\Phi + s\text{tr}(\Phi^\top\Phi)I\) we get \(\theta_*^\top \Phi^\top [I - \Delta] \Phi\theta_* \le 2 \text{tr}(\Phi^\top\Phi) \frac{\|\theta_*\|_2^2}{s+1}\) giving a final bound of the from
+    Following the ordinary least-squares framework, we consider a design matrix \(\Phi \in \mathbb{R}^{n \times d}\) with full column rank \(d\) (thus \(n \ge d\)). 
+    
+    We generate \(m\) replications using Gaussian sketching matrices \(S^{(j)} \in \mathbb{R}^{s \times n}\). The \alert{\textbf{sketched closed-form estimator}} is:
     \[
-                \frac{1}{n} \mathbb{E}_{\varepsilon, S} \Bigg[ \bigg\| \frac{1}{m} \sum_{j=1}^m \hat{y}^{(j)} - \Phi\theta_* \bigg\|_2^2 \Bigg] \le \frac{\sigma^2 s}{n} + \frac{2}{n}\text{tr}(\Phi^\top\Phi)\frac{\|\theta_*\|_2^2}{s+1}
+        \hat{\theta}^{(j)} = (\Phi^\top(S^{(j)})^\top S^{(j)}\Phi)^{-1}\Phi^\top(S^{(j)})^\top S^{(j)}y
+    \]
+    and our final ensemble predictor is:
+    \[
+        \hat{\theta} = \frac{1}{m} \sum_{j=1}^m \hat{\theta}^{(j)}
+    \]
+    By rotating the geometry using the \example{\textbf{Singular Value Decomposition (SVD)}} of \(\Phi\), and relying on the rotational invariance of Gaussian matrices, we can write the prediction vector \(\Phi \hat \theta^{(j)}\) as \\
+    \(\Phi \hat \theta^{(j)} = \begin{pmatrix} y_1 + ((S_1^{(j)})^\top S_1^{(j)})^{-1}(S_1^{(j)})^\top S_2^{(j)} y_2 \\ 0 \end{pmatrix}\)
+\end{frame}
+
+\subsection{Bias and Variance Analysis}
+\begin{frame}
+    Taking expectations over the random sketching matrix \(S^{(j)}\) and using the fact that \(\mathbb{E}[S_2^{(j)}] = 0\), we find that:
+    \[
+        \mathbb{E}_{S^{(j)}}[\Phi\hat{\theta}^{(j)}] = \Phi\hat{\theta}_{\text{OLS}}
+    \]
+    This implies that Gaussian Sketching provides an \alert{\textbf{unbiased}} estimator of the \alert{\textbf{true OLS prediction}}.
+
+    However, sketching injects algorithmic variance. Utilizing the trace of the \emphasize{\textbf{Inverse Wishart distribution}}, the variance of a single sketch is:
+    \[
+        \mathbb{E}_{\varepsilon, S^{(j)}}\left[ \big\|\Phi\hat{\theta}^{(j)} - \mathbb{E}_{S^{(j)}}\Phi\hat{\theta}^{(j)}\big\|_2^2 \right] = \sigma^2 \frac{d(n-d)}{s-d-1}
     \]
 \end{frame}
+
+\subsection{Expected Generalization Error}
+\begin{frame}
+    Combining the Bias and Variance terms for our ensemble of \(m\) independent sketches, the expected fixed-design error is\footnote{See Section 3.5 for standard OLS baseline derivations.}:
+    \[
+        \frac{1}{n} \mathbb{E}_{\varepsilon, S} \Bigg[ \bigg\| \frac{1}{m} \sum_{j=1}^m \Phi\hat{\theta}^{(j)} - \Phi\theta_* \bigg\|_2^2 \Bigg] = \frac{\sigma^2 d}{n} + \textcolor{red}{\frac{\sigma^2 d}{n}\left(\frac{1}{m}\frac{n-d}{s-d-1}\right)}
+    \]
+    where:
+    \begin{itemize}
+        \item \(\frac{\sigma^2 d}{n}\) is the \alert{\textbf{standard OLS error}} baseline;
+        \item the \textcolor{red}{red term} is the \alert{\textbf{algorithmic sketching penalty}};
+        \item \(m\) is the \alert{\textbf{number of replications}} (ensemble size);
+        \item \(s\) is the \alert{\textbf{reduced sketching dimension}} (\(s > d\));
+        \item \(\sigma^2\) is the variance of the independent zero-mean noise \(\varepsilon\).
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    What does this bound tell us about the trade-offs?
+    \begin{itemize}
+        \item as \example{\(m \to \infty\)}: the penalty vanishes. Averaging infinitely many sketches perfectly reconstructs the original OLS estimator.
+        \item to \example{\textbf{match OLS performance}} (up to a factor of 2), we need the penalty term to equal the base error. This requires \(m \sim \frac{n}{s}\) replications.
+    \end{itemize}
+    \vspace{0.5cm}
+    \textbf{Conclusion:} Just like bagging, there is \emphasize{\textbf{no statistical gain}} over OLS. The benefit is purely computational. We can process \(m\) tiny datasets of size \(s \times d\) in parallel instead of one massive dataset of size \(n \times d\).
+\end{frame}
+
+\makepart{Random Projections and Extensions}
+\section{Random Projections}
+\subsection{The High-Dimensional Setting}
+\begin{frame}
+    We now flip the regime: assume \(d > n\) (high-dimensional set-up). Standard OLS is ill-posed because \(\Phi^\top\Phi\) is not invertible.
+    
+    For each \(j = 1,\dots,m\), we use a sketching matrix \(S^{(j)} \in \mathbb{R}^{d \times s}\) (\(s \le n\)), sambled from a distribution to be determined we just assume that \(\text{rank}(S^{(j)} = j)\) a.s. We restrict our parameters by considering \(\hat{\theta}^{(j)} = S^{(j)}\hat{\eta}^{(j)}\) where \(\hat{\eta}^{(j)}\) minimizes \(\min_{\eta \in \mathbb{R}^s} \|y - \Phi S^{(j)}\eta\|_2^2\).
+    The denoised response vector is \(\hat{y}^{(j)} = \Pi^{(j)} y\), where \(\Pi^{(j)} = \Pi^{(j)} = \Phi S^{(j)} \big((S^{(j)})^\top\Phi^\top\Phi S^{(j)}\big)^{-1} (S^{(j)})^\top\Phi^\top\) is an \alert{\textbf{orthogonal projection matrix}} onto an \(s\)-dimensional vector space, such that \(\text{tr}(\Delta) = s\). Let its expectation be \(\Delta = \mathbb{E}[\Pi^{(j)}]\).
+\end{frame}
+
+\subsection{Expected Excess Risk Bound}
+\begin{frame}
+    Decomposing the total error into bias squared and viariance we obtain a first bound of the form \\
+    \(\frac{1}{n} \mathbb{E}_{\varepsilon, S} [ \| \frac{1}{m} \sum_{j=1}^m \hat{y}^{(j)} - \Phi\theta_* \|_2^2 ] \le \frac{\sigma^2 s}{n} + \frac{1}{n} \theta_*^\top \Phi^\top [I - \Delta] \Phi\theta_*.\) \\
+    Now using the properties of the expectation of projection matrix to bound \(I - \Delta\) we get 
+    \begin{equation}
+        \frac{1}{n} \mathbb{E}_{\varepsilon, S} [ \| \frac{1}{m} \sum_{j=1}^m \hat{y}^{(j)} - \Phi\theta_* \|_2^2 ] \le  \frac{\sigma^2 s}{n} + \frac{1}{n} \theta_*^\top \Phi^\top \Big( I - \Phi \mathbb{E}_S \big[SS^\top\big] \big( \mathbb{E}_S \big[SS^\top \Phi^\top \Phi SS^\top\big] \big)^{-1} \mathbb{E}_S \big[SS^\top\big] \Phi^\top \Big) \Phi\theta_*.
+    \end{equation}
+    
+    Finally assuming the case of Gaussian random projections, the overall expected excess risk is bounded by:
+    \[
+        \underbrace{\frac{\sigma^2 s}{n}}_{\text{variance upper bound}} + \underbrace{\frac{2}{n}\text{tr}(\Phi^\top\Phi)\frac{\|\theta_*\|_2^2}{s+1}}_{\text{bias upper bound}}
+    \]
+    where:
+    \begin{itemize}
+        \item \(s\) acts as the \alert{\textbf{inverse regularization parameter}} (similar to \(1/\lambda\) in Ridge Regression)
+    \end{itemize}
+    As \(s\) drops, variance vanishes but bias explodes. This perfectly mirrors the \example{\textbf{bias-variance trade-off}} seen in Ridge Regression (Eq. 3.6).
+\end{frame}
+
+\subsection{Exercise 10.4: Feature Subsampling}
+
+\begin{frame}
+    What if we replace the dense Gaussian matrix with a sparse one? 
+
+    Consider a sketching matrix \(S \in \mathbb{R}^{d \times s}\), where each column is a \alert{\textbf{canonical basis vector}} \(e_i\). This is identical to randomly \example{\textbf{subsampling \(s\) features}} out of \(d\).
+
+    Using the the bias bound from eq. (1) and using the moments of the Multinomial distribution we get an \example{\textbf{overall expected excess risk}}:
+    \[
+        \underbrace{\frac{\sigma^2 s}{n}}_{\text{variance}} + \underbrace{\frac{1}{n} \left( \frac{d}{s-1} \text{tr}(\Phi^\top\Phi) \|\theta_*\|_2^2 \right)}_{\text{bias upper bound}}
+    \]
+
+    \textbf{Conclusion:}
+    \begin{itemize}
+        \item The bias term scales as \(\frac{d}{s}\) instead of \(\frac{1}{s}\) (Gaussian case). You need \(s \propto d\) to achieve the same regularization.
+        \item However, it provides better \alert{\textbf{computational performance}} since no dense \(\mathcal{O}(nd^2)\) matrix multiplications are required.
+    \end{itemize}
+\end{frame}
+
+
+\section{Extensions: Kernel Methods}
+
+\subsection{Infinite-Dimensional Models and RKHS}
+\begin{frame}
+    How do we apply random projections when the feature dimension \(d\) is infinite? We turn to \emphasize{\textbf{Kernel Methods}}
+    
+    Instead of explicit feature vectors \(\varphi(x)\), we access data exclusively through a \alert{\textbf{positive definite kernel function}}:
+    \[
+        k(x, x') = \langle \varphi(x), \varphi(x') \rangle_{\mathcal{H}}
+    \]
+    where \(\mathcal{H}\) is a \emphasize{\textbf{Reproducing Kernel Hilbert Space (RKHS)}}. Key properties from Chapter 7 include:
+    \begin{itemize}
+        \item \alert{\textbf{Reproducing Property}}: Function evaluation is a dot-product: \(\langle k(\cdot, x), f \rangle_{\mathcal{H}} = f(x)\).
+        \item \alert{\textbf{Representer Theorem}}: The infinite-dimensional optimization \(\min_{f \in \mathcal{H}} \frac{1}{n} \sum \ell(y_i, f(x_i)) + \frac{\lambda}{2} \|f\|_{\mathcal{H}}^2\) has a finite-dimensional solution \(f(x) = \sum_{i=1}^n \alpha_i k(x, x_i)\).
+    \end{itemize}
+    This allows us to map the target signal \(y_* = \Phi\theta_*\) to \(K\alpha\), and the norm \(\|\theta_*\|_2^2\) to the RKHS norm \(y_*^\top K^{-1} y_*\).
+\end{frame}
+
+\subsection{Bochner's Theorem and the Generalization Bound}
+\begin{frame}
+    To apply our random projection theory to kernels, we consider a "sketch" \(\hat{\Phi} \in \mathbb{R}^{n \times s}\). What defines the underlying geometry of these projections?
+    
+    \emphasize{\textbf{Bochner's Theorem (Prop 7.4):}} A translation-invariant kernel \(k(x, x') = q(x - x')\) is positive definite if and only if \(q\) is the \example{\textbf{Fourier transform of a non-negative Borel measure}}.
+    \[
+        k(x, x') = \int_{\mathbb{R}^d} \hat{q}(\omega) e^{i\omega^\top(x-x')} d\omega
+    \]
+    If we mathematically sample the columns of our sketch \(\hat{\Phi}\) from a multivariate Gaussian \(\mathcal{N}(0, K)\), we perfectly map the ensemble projection bounds from Chapter 10 into the kernel space:
+    \[
+        \text{Expected Risk} \le \underbrace{\frac{\sigma^2 s}{n}}_{\text{variance}} + \underbrace{\frac{2}{n}\text{tr}(K)\frac{y_*^\top K^{-1} y_*}{s+1}}_{\text{bias (RKHS norm)}}
+    \]
+    We recover the exact same \example{\textbf{Bias-Variance trade-off}}, dictated by the sketch dimension \(s\).
+\end{frame}
+
+\subsection{Random Fourier Features (RFF)}
+\begin{frame}
+    \alert{\textbf{The Bottleneck:}} Generating a sketch \(\hat{\Phi} \sim \mathcal{N}(0, K)\) requires computing the full \(n \times n\) matrix \(K\) and its square root \(K^{1/2}\). This takes \example{\(\mathcal{O}(n^3)\) time}, destroying the computational benefit of random projections!
+    
+    \alert{\textbf{The Solution:}} We use \emphasize{\textbf{Random Fourier Features}}. Using Bochner's theorem, we rewrite the kernel as an expectation over random frequencies \(v\):
+    \[
+        k(x, x') = \mathbb{E}_v \big[ \varphi(x, v)\varphi(x', v) \big]
+    \]
+    Instead of computing \(K\), we construct \(\hat{\Phi} \in \mathbb{R}^{n \times s}\) directly. Each column evaluates a random frequency across all datapoints: \(\big(\varphi(x_1, v), \dots, \varphi(x_n, v)\big)^\top\).
+    \begin{itemize}
+        \item \example{\textbf{Time to build sketch:}} \(\mathcal{O}(ns)\) (no \(n \times n\) matrix computed).
+        \item \example{\textbf{Time to solve OLS:}} \(\mathcal{O}(ns^2)\).
+    \end{itemize}
+    RFF gives us a highly efficient, strictly \(\mathcal{O}(n)\) algorithm that practically achieves the theoretical infinite-dimensional risk bounds!
+\end{frame}
+
+\subsection{The Johnson-Lindenstrauss Lemma}
+\begin{frame}
+    Why do random projections work so well geometrically? 
+    
+    The classical \alert{\textbf{Johnson-Lindenstrauss (JL) Lemma}} states that for any \(n\) points in \(\mathbb{R}^d\), a Gaussian random projection matrix \(S \in \mathbb{R}^{d \times s}\) preserves pairwise distances with probability \(> 1-\delta\) if:
+    \[
+        s \ge \frac{6}{\varepsilon^2} \log \frac{n^2}{\delta}
+    \]
+    yielding:
+    \[
+        (1-\varepsilon)\|\varphi_i - \varphi_j\|_2^2 \le \|s^{-1/2}S^\top \varphi_i - s^{-1/2}S^\top \varphi_j\|_2^2 \le (1+\varepsilon)\|\varphi_i - \varphi_j\|_2^2
+    \]
+    Crucially, the required projected dimension \(s\) depends \example{\textbf{only logarithmically on \(n\)}} and is completely independent of the original dimension \(d\).
+\end{frame}
+
+
 \end{document}
