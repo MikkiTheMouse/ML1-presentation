@@ -51,6 +51,7 @@
 \begin{frame}{Index of the presentation}
     \tableofcontents[part=1]
     \tableofcontents[part=2]
+    \tableofcontents[part=3]
 \end{frame}
 
 \makepart{What is Ensemble Learning?}
@@ -137,6 +138,69 @@
     because of i.i.d. assumption. 
 \end{frame}
 
+\subsection{Example: \(k\)-nearest neighbor regression}
+\begin{frame}
+    Take \(\mathcal{X}\subset\mathbb{R}^d\). In this case we have that the expected excess risk is upper bounded in this way\footnote{See Proposition 6.2, p. 170 \textit{Learning Theory from First Principles}, by \textit{Francis Bach}.}:
+    \[
+        \int_{\mathcal{X}}\mathbb{E}\left[(\hat{f}(x)-f_\star(x))^2\right]\mathrm{d}p(x)\leq\underbrace{\frac{\sigma^2}{k}}_{\text{variance upper bound}}+\underbrace{8B^2\text{diam}(\mathcal{X})^2\left(\frac{2k}{n}\right)^{2/d}}_{\text{bias upper bound}},
+    \]
+    where:
+    \begin{itemize}
+        \item \(\mathcal{X}\) is the \alert{\textbf{input feature space}} and \(\mathcal{Y}\) is the \alert{\textbf{output space}};
+        \item \(f_\star\in\argmin\limits_{y\in\mathcal{Y}}\mathbb{E}\left[\ell(y,\,z)\mid x\right]\) is the \alert{\textbf{Bayes predictor}};
+        \item \(\hat{f}(x)\) is the \alert{\textbf{prediction}} made by the \alert{\textbf{\(k\)-nearest neighbor estimator}} at a specific \alert{\textbf{evaluation point}} \(x\);
+        \item \(p(x)\) is the \alert{\textbf{marginal probability distribution}} of the input features;
+        \item \(\sigma^2\) is the \alert{\textbf{irreducible error}} \(\text{var}(y \mid x)\);
+        \item \(B\) is the \alert{\textbf{Lipschitz constant}} of the Bayes predictor \(f_\star(x)\);
+        \item \(\text{diam}(\mathcal{X})\) is the \alert{\textbf{maximum possible distance}} between any two points in the space.
+    \end{itemize}   
+\end{frame}
+\begin{frame}    
+    Thus, \alert{\textbf{averaging}} over \(m\) replications, we get that the \example{\textbf{excess risk}} is upper bounded by:
+    \[
+        \int_{\mathcal{X}}\mathbb{E}\left[(\hat{f}(x)-f_\star(x))^2\right]\mathrm{d}p(x)\leq\frac{\sigma^2}{\textcolor{red}{m}k}+8B^2\text{diam}(\mathcal{X})^2\left(\frac{2k}{n}\right)^{2/d},
+    \]
+    and optimizing over \(k\) yields: \(k\propto \frac{1}{m^{d/(2+d)}}\cdot n^{2/(2+d)}\). The overall excess risk ends up being proportional to \(1/(mn)^{2/(2+d)}\), which coincides with the rate for a dataset with \(N=nm\) observations.
+    
+    Clearly we have a limit concerning the number  of datasets we can construct: we need \(k>1\), thus substituting in this condition the optimal \(k\) (which is a function of \(m\) and \(n\)) we see that \(m\) cannnot grow larger than \(n^{2/d}\).
+\end{frame}
+
+\subsection{Example: Ridge regression (misspecified model)}
+\begin{frame}
+    In this case we have that the expected excess risk is upper bounded in this way\footnote{See Proposition 7.8, p. 216 \textit{Learning Theory from First Principles}, by \textit{Francis Bach}.}:
+    \[
+        \int_{\mathcal{X}}\mathbb{E}\left[(\hat{f}(x)-f_\star(x))^2\right]\mathrm{d}p(x)\leq\underbrace{\frac{\sigma^2}{n}\left(1+\frac{R^2}{\lambda n}\right)\text{tr}\left(\left(\Sigma+\lambda I\right)^{-1}\Sigma\right)}_{\text{variance upper bound}}+\underbrace{\left(1+\frac{R^2}{\lambda n}\right)^2\inf\limits_{f\in\mathcal{H}}\{\mid\mid f-f_\star\mid\mid^2_{L_2(p)}+\lambda\mid\mid f\mid\mid_{\mathcal{H}}^2\}}_{\text{bias upper bound}},
+    \]
+    where:
+    \begin{itemize}
+        \item \(\mathcal{X}\), \(f_\star\), \(\hat{f}\), \(p(x)\), \(\sigma^2\) represent the same things as before,
+        \item \(\lambda\) is the \alert{\textbf{regularization parameter}}, which controls the trade-off between fitting the training data and keeping the model weights small;
+        \item \(\Sigma\) is the \alert{\textbf{covariance matrix}} of the features in the feature space;
+        \item \(R^2\) is a \alert{\textbf{bounding constant}} related to the norm of the features;
+        \item \(\mathcal{H}\) is the \alert{\textbf{Reproducing Kernel Hilbert Space (RKHS)}} (or hypothesis space) where the candidate functions \(f\) live;
+        \item \(\text{tr}\left(\left(\Sigma+\lambda I\right)^{-1}\Sigma\right)\) are the \alert{\textbf{degrees of freedom}} associated to the covariance operator \(\Sigma\).
+    \end{itemize}  
+\end{frame}
+
+\begin{frame}    
+    For the \example{\textbf{bias term}}, assuming:
+    \begin{itemize}
+        \item \(\mathcal{X}=\mathbb{R}^d\);
+        \item that the target function belongs to a Sobolev Kernel of order \(t>0\);
+        \item that \(\mathcal{H}\) is a Sobolev space of order \(s>d/2\); 
+    \end{itemize}
+    one gets that the bias term is of order \(\left(1+\frac{R^2}{\lambda n}\right)^2\lambda^{t/s}\). 
+    
+    For the \example{\textbf{variance term}}, assuming:
+    \begin{itemize}
+        \item that the eigenvalues \((\lambda_m)\) of the covariance matrix \(\Sigma\) satisfy \(\lambda_m\leq C(m+1)^{\alpha}\), \(\alpha>1\);
+    \end{itemize} 
+    then \(\text{tr}\left(\left(\Sigma+\lambda I\right)^{-1}\Sigma\right)\leq O(\lambda^{1/\alpha})\). With our \(\mathcal{X}\), \(\alpha=2s/d\), thus the variance is proportional to \(\frac{1}{n}\lambda^{-d/(2s)}\)\footnote{See section 7.6.6, p. 217 \textit{Learning Theory from First Principles}, by \textit{Francis Bach}.}.
+
+    \alert{\textbf{Averaging}} over \(m\) replications, we get that the \example{\textbf{excess risk}} is proportional to \(\frac{\sigma^2}{nm}\lambda{-1/\alpha}+\lambda^{t/s}\), and again the estimator behaves like having \(N=nm\) observations.
+\end{frame}
+
+\makepart{Random projections and averaging}
 \section{Random projections and averaging}
 \begin{frame}
     In the previous section observation were reweighted to be able to re-run the original algorithm, this can also be done through \alert{\textbf{random projection}}. This can be done in several ways:
@@ -172,13 +236,11 @@
 \end{itemize}
 \end{frame}
 
-\subsection{Random projections}
-
+\section{Random projections}
 \begin{frame}
     We are still in a regression setting but we now assume that $d > n$ (high-dimensional set-up) and that the rank of $\Phi$ is $n$. For each $j \in \{1,\dots,m\}$, we consider a sketching matrix $S^{(j)} \in \mathbb{R}^{d \times s}$, for $s \le n$ sampled independently from a distribution to be determined (we only assume that almost surely, its rank is equal to $s$). We then consider $\hat{\eta}^{(j)}$ as a minimizer of $\min_{\eta \in \mathbb{R}^s} \|y - \Phi S^{(j)}\eta\|_2^2$. We assume that the matrix $\Phi S^{(j)}$ has rank $s$ and consider the average $\hat{\theta} = \frac{1}{m} \sum_{j=1}^m S^{(j)}\hat{\eta}^{(j)}$. As before we want to bound the quantity
     \[\frac{1}{n} \mathbb{E}_{\varepsilon, S} \Bigg[ \bigg\| \frac{1}{m} \sum_{j=1}^m \hat{y}^{(j)} - \Phi\theta_* \bigg\|_2^2 \Bigg]\]
 \end{frame}
-
 \begin{frame}
     Derivation of the bound:
     \begin{align*}
@@ -190,9 +252,5 @@
     \[
                 \frac{1}{n} \mathbb{E}_{\varepsilon, S} \Bigg[ \bigg\| \frac{1}{m} \sum_{j=1}^m \hat{y}^{(j)} - \Phi\theta_* \bigg\|_2^2 \Bigg] \le \frac{\sigma^2 s}{n} + \frac{2}{n}\text{tr}(\Phi^\top\Phi)\frac{\|\theta_*\|_2^2}{s+1}
     \]
-\end{frame}
-
-\begin{frame}[allowframebreaks]{References}
-    \printbibliography
 \end{frame}
 \end{document}
