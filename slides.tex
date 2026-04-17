@@ -31,7 +31,7 @@
 \institute{
     Collegio Carlo Alberto, \\
     University of Turin}
-\date{\today}
+\date{April 29, 2026}
 
 % packages
 \usepackage{amsmath}
@@ -48,16 +48,20 @@
 \addtocounter{framenumber}{-1}
 
 % You can declare different parts as a parentof sections
-\begin{frame}{Index of the presentation}
+\begin{frame}{Index of the presentation: part I}
     \tableofcontents[part=1]
+\end{frame}
+\begin{frame}{Index of the presentation: part II}
     \tableofcontents[part=2]
+\end{frame}
+\begin{frame}{Index of the presentation: part III}
     \tableofcontents[part=3]
 \end{frame}
 
 \makepart{What is Ensemble Learning?}
 
 \justifying
-\section{what is Ensemble Learning?}
+\section{What is Ensemble Learning?}
 \subsection{An overview}
 \begin{frame}
     Given a \emphasize{\textbf{supervised learning algorithm}} \(\mathcal{A}(\mathcal{D})\,:\,\mathcal{X}\to\mathcal{Y}\), can we run it more than once on datasets constructed from the original one \(\mathcal{D}\) and then combine the results to get an overall better predictor? Kind of.
@@ -106,7 +110,7 @@
 \end{frame}
 
 \makepart{Averaging/Bagging}
-\section{Averaging/Bagging}
+\section{Averaging}
 \subsection{The framework}
 \begin{frame}
     We will consider \alert{\textbf{regression with square loss}} where we have an explicit \example{\textbf{variance/bias}} decomposition.
@@ -198,6 +202,75 @@
     then \(\text{tr}\left(\left(\Sigma+\lambda I\right)^{-1}\Sigma\right)\leq O(\lambda^{1/\alpha})\). With our \(\mathcal{X}\), \(\alpha=2s/d\), thus the variance is proportional to \(\frac{1}{n}\lambda^{-d/(2s)}\)\footnote{See section 7.6.6, p. 217 \textit{Learning Theory from First Principles}, by \textit{Francis Bach}.}.
 
     \alert{\textbf{Averaging}} over \(m\) replications, we get that the \example{\textbf{excess risk}} is proportional to \(\frac{\sigma^2}{nm}\lambda{-1/\alpha}+\lambda^{t/s}\), and again the estimator behaves like having \(N=nm\) observations.
+\end{frame}
+
+\section{Bagging}
+\subsection{The framework}
+\begin{frame}
+    We will consider again \alert{\textbf{regression with square loss}} where we have an explicit \example{\textbf{variance/bias}} decomposition.
+    \begin{itemize}
+        \item most results extend to other situations using convex surrogates.
+    \end{itemize}
+    We suppose we have datasets \(\mathcal{D}^{(b)}\), \(b=1,\dots,m\). Fixing \(b\), each of them obtained with \alert{\textbf{random weights}} \(v_i^{(b)}\in\mathbb{R}_+\,i=1,\dots,n\). Recall that in the case of natural numbers that sum up to \(n\) we are in the setting of bootstrapping.
+
+    We study \(m=\infty\), even though in pratice approximately asymptotic performances are achieved for moderate \(m\)'s.
+\end{frame}
+
+\subsection{For linear estimators}
+\begin{frame}
+    For linear estimators (e.g. \example{\textbf{kernel ridge regression}} or \example{\textbf{local averaging}}) this procedure yields another linear estimator with a \example{\textbf{lower variance}} and an unchanged \example{\textbf{bias}}
+    \begin{itemize}
+        \item in this sense, bagging can be seen as another way of \alert{\textbf{regularizing}}.
+    \end{itemize} 
+    This means that there's no strong statistical gain, but rather a computational one.
+\end{frame}
+
+\subsection{Example: one-nearest neighbor regression}
+\begin{frame}
+    Denote as \((x_{(i)}(x),\,y_{(i)}(x))\) the \(i\)-th closest neighbor of \(x\) from the dataset \(x_1,\dots,x_n\), we can write the \alert{\textbf{bagged}} estimate as:
+    \[
+    \hat{f}(x)=\sum\limits_{i=1}^nV_iy_{(i)}(x).\footnote{\text{Here we mean \(\hat{f}(x)=\frac{1}{m}\sum_{b=1}^m\hat{f}^{(b)}(x)\).}}
+    \]
+    The weights \(V_i\) sum to \(1\) (interpret \(V_i\) as the probability that the \(i\)-th nearest neighbor of \(x\) is also the \(i\)-th nearest in a uniform subsample of a certain size \(s\), where we assume \(s\geq2\)) and do not depend on \(x\).
+\end{frame}
+
+\begin{frame}{}{Example: one-nearest neighbor regression. Variance}
+    For the \example{\textbf{variance}} term, since (using \(y_{(i)}=f_\star(x_{(i)})+\varepsilon_i\)):
+    \[
+        \text{var}(\hat{f}(x)) = \text{var}\left( \sum_{i=1}^n V_i y_{(i)} \right)=\sum_{i=1}^n \text{var}(V_i y_{(i)})=\sum_{i=1}^n V_i^2 \text{var}(y_{(i)})=\sigma^2 \sum_{i=1}^n V_i^2,
+    \]
+    (where \(\sigma^2\) represents the variance of the irreducible random noise) we need a bound for \(\sum_{i=1}^n V_i^2\).
+
+    Combinatorically, it can be shown that\footnote{See section 10.1.2, p. 286 \textit{Learning Theory from First Principles}, by \textit{Francis Bach}.}: \(V_i\leq\frac{s}{n-s+1}\prod\limits_{j=0}^{s-2}\left(1-\frac{i}{n}\right)\), which leads to \(\sum\limits_{i=1}^nV_i^2\leq\frac{s}{n}\frac{1}{(1+1/n-s/n)^2}\).
+\end{frame}
+
+\begin{frame}{}{Example: one-nearest neighbor regression. Bias}
+    For the \example{\textbf{bias}} term, since (using again \(y_{(i)}=f_\star(x_{(i)})+\varepsilon_i\)):
+    \[
+        \mathbb{E}[\hat{f}(x)] - f_\star(x)=\sum_{i=1}^n V_i f_\star(x_{(i)}) - f_\star(x)=\sum_{i=1}^n V_i \left( f_\star(x_{(i)}) - f_\star(x) \right),
+    \]
+    assuming \(f_\star\) to be \(B\)-Lipschitz continuous (meaning \(|f_\star(x_{(i)}) - f_\star(x)| \leq B \|x - x_{(i)}\|\)), by applying the Lipschitz condition and squaring the result we get:
+    \[
+        (\mathbb{E}[\hat{f}(x)] - f_\star(x))^2\leq B^2 \sum_{i=1}^n V_i \mathbb{E}\left[\|x - x_{(i)}\|^2\right].
+    \]
+    Since the right term is \(B^2\) multiplied by the expectation of the distance to the first neighbor from a random sample of size \(s\):
+    \[
+        B^2 \sum_{i=1}^n V_i \mathbb{E}\left[\|x - x_{(i)}\|^2\right]\leq 4B^2\text{diam}(\mathcal{X})^2\frac{1}{s^{2/d}},\footnote{\text{See lemma 6.1, p. 168 \textit{Learning Theory from First Principles}, by \textit{Francis Bach}.}}
+    \]
+    where \(\mathcal{X}\) is the subset of \(\mathbb{R}^d\) where the input data live.
+\end{frame}
+
+\begin{frame}{}{Example: one-nearest neighbor regression}
+    Thus, the overall \alert{\textbf{excess risk}} is bounded by:
+    \[
+        4B^2\text{diam}(\mathcal{X})^2\frac{1}{s^{2/d}}+\frac{s}{n}\frac{1}{(1+1/n-s/n)^2}.
+    \]
+    This can be balanced by choosing \(s^{1+2/d}\propto n\), leading to performance as the \(k\)-nearest neighbor for a well chosen \(k\), but with a bagged estimate.
+\end{frame}
+
+\begin{frame}{}{Example: one-nearest neighbor regression -- picture}
+    \centering
+    \includegraphics[width=0.8\textwidth]{img.png}
 \end{frame}
 
 \makepart{Random projections and averaging}
