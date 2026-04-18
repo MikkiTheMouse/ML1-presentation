@@ -279,7 +279,7 @@
 \section{The Two Paradigms}
 \subsection{Overview of Data Compression}
 \begin{frame}
-    In the previous section, we reweighted observation to be able to ru-run the original algorithm, this can also be done through random projection, to reduce the computation cost of finding the exact solution to OLS require \(\mathcal{O}(nd^2)\) time.
+    In the previous section, we reweighted observation to be able to re-run the original algorithm, this can also be done through random projection, to reduce the computation cost of finding the exact solution to OLS require \(\mathcal{O}(nd^2)\) time.
     We consider two settings:
     \begin{itemize}
         \item \alert{\textbf{Sketching (\(S \in \mathbb{R}^{s \times n}\))}}: shrinking the datapoints (rows). We compress \(n\) observations into \(s\) new observations (\(n > s > d\)) by replacing \(\min_{\theta \in \mathbb{R}^d}\|y - \Phi\theta \|^2_2 \) by \(\min_{\theta \in \mathbb{R}^s}\|Sy - S\Phi\theta \|^2_2 \) where \(S\) is an i.i.d Gaussian matrix.
@@ -413,20 +413,6 @@
 \section{Extensions: Kernel Methods}
 
 \subsection{Infinite-Dimensional Models and RKHS}
-\begin{frame}
-    How do we apply random projections when the feature dimension \(d\) is infinite? We turn to \emphasize{\textbf{Kernel Methods}}
-    
-    Instead of explicit feature vectors \(\varphi(x)\), we access data exclusively through a \alert{\textbf{positive definite kernel function}}:
-    \[
-        k(x, x') = \langle \varphi(x), \varphi(x') \rangle_{\mathcal{H}}
-    \]
-    where \(\mathcal{H}\) is a \emphasize{\textbf{Reproducing Kernel Hilbert Space (RKHS)}}. Key properties from Chapter 7 include:
-    \begin{itemize}
-        \item \alert{\textbf{Reproducing Property}}: Function evaluation is a dot-product: \(\langle k(\cdot, x), f \rangle_{\mathcal{H}} = f(x)\).
-        \item \alert{\textbf{Representer Theorem}}: The infinite-dimensional optimization \(\min_{f \in \mathcal{H}} \frac{1}{n} \sum \ell(y_i, f(x_i)) + \frac{\lambda}{2} \|f\|_{\mathcal{H}}^2\) has a finite-dimensional solution \(f(x) = \sum_{i=1}^n \alpha_i k(x, x_i)\).
-    \end{itemize}
-    This allows us to map the target signal \(y_* = \Phi\theta_*\) to \(K\alpha\), and the norm \(\|\theta_*\|_2^2\) to the RKHS norm \(y_*^\top K^{-1} y_*\).
-\end{frame}
 
 \begin{frame}
     In standard setups, we observe data \(x\) in a raw \alert{\textbf{input space \(\mathcal{X}\)}}. To capture complex patterns, we map these observations into a potentially infinite-dimensional \emphasize{\textbf{feature space \(\mathcal{H}\)}} using a feature map \(\varphi: \mathcal{X} \rightarrow \mathcal{H}\).
@@ -457,7 +443,7 @@
     
     \begin{itemize}
         \item \alert{\textbf{The Sketch:}} We approximate the infinite space by drawing a finite random sketch matrix \(\hat{\Phi} \in \mathbb{R}^{n \times s}\). 
-        \item \alert{\textbf{Finite OLS:}} We then run standard OLS on this sketch to get our predictions: \(\hat{y} = \hat{\Phi}(\hat{\Phi}^\top \hat{\Phi})^{-1}\hat{\Phi}^\top y\). Crucially, we only have to invert the much smaller \(s \times s\) covariance matrix \((\hat{\Phi}^\top \hat{\Phi})\), bypassing the massive \(n \times n\) matrix \(K\).
+        \item \alert{\textbf{Finite OLS:}} We then run standard OLS on this sketch to get our predictions: \(\hat{y} = \hat{\Phi}(\hat{\Phi}^\top \hat{\Phi})^{-1}\hat{\Phi}^\top y\). Crucially, we only have to invert the much smaller \(s \times s\) covariance matrix \((\hat{\Phi}^\top \hat{\Phi})\).
     \end{itemize}
 
     \vspace{0.2cm}
@@ -501,13 +487,9 @@
 \begin{frame}
     Why do random projections work so well geometrically? 
     
-    The classical \alert{\textbf{Johnson-Lindenstrauss (JL) Lemma}} states that for any \(n\) points in \(\mathbb{R}^d\), a Gaussian random projection matrix \(S \in \mathbb{R}^{d \times s}\) preserves pairwise distances with probability \(> 1-\delta\) if:
+    The \alert{\textbf{Johnson-Lindenstrauss (JL) Lemma}} states that given \(\varphi_1,...,\varphi_n\;\in \mathbb{R}^d\), let \(S \in \mathbb{R}^{d \times s}\) be a random matrix with independent standard Gaussian variables. Then, for any \(\epsilon \in (0, 1/2)\) and \(\delta \in (0, 1)\), if \(s \ge \frac{6}{\varepsilon^2} \log \frac{n^2}{\delta}\), with probability greater than \(1-\delta\), we have
     \[
-        s \ge \frac{6}{\varepsilon^2} \log \frac{n^2}{\delta}
-    \]
-    yielding:
-    \[
-        (1-\varepsilon)\|\varphi_i - \varphi_j\|_2^2 \le \|s^{-1/2}S^\top \varphi_i - s^{-1/2}S^\top \varphi_j\|_2^2 \le (1+\varepsilon)\|\varphi_i - \varphi_j\|_2^2
+        \forall i,j \in \{1,...,n\}\;(1-\varepsilon)\|\varphi_i - \varphi_j\|_2^2 \le \|s^{-1/2}S^\top \varphi_i - s^{-1/2}S^\top \varphi_j\|_2^2 \le (1+\varepsilon)\|\varphi_i - \varphi_j\|_2^2
     \]
     Crucially, the required projected dimension \(s\) depends \example{\textbf{only logarithmically on \(n\)}} and is completely independent of the original dimension \(d\).
 \end{frame}
