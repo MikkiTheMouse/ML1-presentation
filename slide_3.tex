@@ -1,0 +1,437 @@
+% Copyright (c) 2022 by Lars Spreng
+% This work is licensed under the Creative Commons Attribution 4.0 International License. 
+% To view a copy of this license, visit http://creativecommons.org/licenses/by/4.0/ or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% You can add your packages and commands to the loadslides.tex file. 
+% The files in the folder "styles" can be modified to change the layout and design of your slides.
+% I have included examples on how to use the template below. 
+% Some of these examples are taken from the Metropolis template.
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+\documentclass[
+11pt,notheorems,hyperref={pdfauthor=whatever}
+]{beamer}
+
+\input{loadslides.tex} % Loads packages and some defined commands
+
+\title[
+% Text entered here will appear in the bottom middle
+]{Ensemble learning}
+
+\subtitle{How to use multiple times the same data}
+
+\author[
+% Text entered here will appear in the bottom left corner
+]{
+    Michele Vincenzo Branca, Leonardo De Pietro
+}
+
+\institute{
+    Collegio Carlo Alberto, \\
+    University of Turin}
+\date{April 29, 2026}
+
+% packages
+\usepackage{amsmath}
+
+\begin{document}
+
+% Generate title page
+{
+\setbeamertemplate{footline}{} 
+\begin{frame}
+  \titlepage
+\end{frame}
+}
+\addtocounter{framenumber}{-1}
+
+\begin{frame}{Index of the presentation}
+    % This stacks the sections from all three parts into one unified list
+    \tableofcontents[part=1, hideallsubsections]
+    \tableofcontents[part=2, hideallsubsections]
+    \tableofcontents[part=3, hideallsubsections]
+\end{frame}
+
+\makepart{What is Ensemble Learning?}
+\justifying
+\section{What is Ensemble Learning?}
+\subsection{An overview}
+\begin{frame}
+    Given a \emphasize{\textbf{supervised learning algorithm}} \(\mathcal{A}(\mathcal{D})\,:\,\mathcal{X}\to\mathcal{Y}\), we construct new datasets by assigning \alert{different weights} to the data points. \\
+    Can we run the algorithm more times on these datasets and combine the results to get an overall better predictor? Kind of.
+    
+    First of all, what kind of combinations are we (typically) talking about?
+    \begin{itemize}
+        \item linear ones!
+    \end{itemize}
+    How do we do it for various algorithms?
+    \begin{itemize}
+        \item \alert{\textbf{local averaging methods}}: combine the predicted labels from estimators learned on different datasets;
+        \item \alert{\textbf{regression}}: linearly combine the predictions;
+        \item \alert{\textbf{classification}}: weighted majority vote or linear combination of real-valued predictions when convex surrogates are used.
+    \end{itemize}
+    What's the impact?
+    \begin{itemize}
+    \item for \example{\textbf{linear models}} this method does not add new functions, ;
+    \item for \example{\textbf{non-linear models}} this method can add new functions. 
+    \end{itemize}
+    In both cases we observe a \alert{\textbf{reduction in variance}} and \alert{\textbf{computational cost}}
+\end{frame}
+
+\makepart{Averaging/Bagging}
+\justifying
+\section{Averaging}
+\subsection{The framework}
+\begin{frame}
+    We will consider \alert{\textbf{regression with square loss}} where we have an explicit \example{\textbf{variance/bias}} decomposition.
+    \begin{itemize}
+        \item most results extend to other situations using convex surrogates.
+    \end{itemize}
+\end{frame}
+
+\subsection{Averaging: the idealized setting}
+\begin{frame}{Idealized Averaging}
+    \textbf{The Setup:} \(m\) independent datasets of size \(n\), sampled i.i.d. from \(p(x,\,y)\).
+
+    \vspace{0.5em}
+    \textbf{The Bagged Estimator:}
+    \[
+        \hat{f}^{\text{bag}}(x) = \frac{1}{m} \sum_{j=1}^m \hat{f}^{(j)}(x)
+    \]
+
+    \vspace{0.5em}
+    \textbf{Impact on Bias \& Variance} (for fixed \(x\)):
+    \begin{itemize}
+        \item \example{\textbf{Bias:}} Remains exactly the same.\\
+        \(\text{bias}^{\text{bag}}(x) = \text{bias}^{(j)}(x)\)
+        
+        \item \example{\textbf{Variance:}} Reduced by a factor of \(m\).\\
+        \(\text{var}^{\text{bag}}(x) = \frac{1}{m}\text{var}^{(j)}(x)\)
+    \end{itemize}
+
+    \vspace{0.5em}
+    \begin{block}{The Ideal Bagging Effect}
+        Because the datasets are strictly independent, averaging \(m\) models drastically cuts the variance without introducing any additional bias.
+    \end{block}
+\end{frame}
+
+
+\subsection{Example: \(k\)-nearest neighbor regression}
+
+\begin{frame}
+    \textbf{Expected Excess Risk (\(k\)-NN with averaging):}
+    \[
+        \int_{\mathcal{X}}\mathbb{E}\left[(\hat{f}(x)-f_\star(x))^2\right]\mathrm{d}p(x) \leq \underbrace{\frac{\sigma^2}{\textcolor{red}{m}k}}_{\text{variance bound}} + \underbrace{8B^2\text{diam}(\mathcal{X})^2\left(\frac{2k}{n}\right)^{2/d}}_{\text{bias bound}}
+    \]
+    \textit{(Note: For standard \(k\)-NN without averaging, simply set \(m=1\)).}
+    
+    \vspace{0.5em}
+    \textbf{Assumptions:} \(f_\star\) is \(B\)-Lipschitz continuous, and \(\text{diam}(\mathcal{X})\) is the maximum distance between any two points in the feature space.
+
+    \vspace{0.5em}
+    \textbf{Optimization \& Limits:}
+    \begin{itemize}
+        \item \example{\textbf{Optimal \(k\):}} Balancing the bias-variance tradeoff yields \(k \propto m^{-d/(2+d)} \cdot n^{2/(2+d)}\).
+        \item \example{\textbf{Effective Sample Size:}} The final risk scales as \(1/(mn)^{2/(2+d)}\). This matches the rate of having a single massive dataset of \(N=nm\) observations!
+        \item \alert{\textbf{Constraint on \(m\):}} Because a valid model requires \(k > 1\), the number of replications cannot grow indefinitely. We must restrict \(m \leq n^{2/d}\).
+    \end{itemize}
+\end{frame}
+
+\subsection{Example: Ridge regression (misspecified model)}
+
+\begin{frame}
+    \textbf{Expected Excess Risk Bound:}
+    \[
+        \int_{\mathcal{X}}\mathbb{E}\left[(\hat{f}(x)-f_\star(x))^2\right]\mathrm{d}p(x) \leq \underbrace{\frac{\sigma^2}{n}\left(1+\frac{R^2}{\lambda n}\right)\text{tr}\left(\left(\Sigma+\lambda I\right)^{-1}\Sigma\right)}_{\text{variance upper bound}} + \underbrace{\left(1+\frac{R^2}{\lambda n}\right)^2\inf\limits_{f\in\mathcal{H}}\left\{\mid\mid f-f_\star\mid\mid^2_{L_2(p)}+\lambda\mid\mid f\mid\mid_{\mathcal{H}}^2\right\}}_{\text{bias upper bound}}
+    \]
+    
+    \vspace{0.25em}
+    \textbf{Key Definitions:}
+    \begin{itemize}
+        \item \(\mathcal{H}\): The \alert{\textbf{Reproducing Kernel Hilbert Space}} (RKHS).
+        \item \(R^2\): A bounding constant for the feature norms.
+        \item \(\text{tr}\left(\left(\Sigma+\lambda I\right)^{-1}\Sigma\right)\): The \alert{\textbf{degrees of freedom}} of the covariance operator.
+    \end{itemize}  
+
+    \vspace{0.5em}
+    \textbf{Asymptotic Rates} (Assuming a Sobolev space \(\mathcal{H}\) of order \(s > d/2\)):
+    \begin{itemize}
+        \item \example{\textbf{Bias Term:}} Scales as \(\mathcal{O}(\lambda^{t/s})\) (where \(t\) is the target function order).
+        \item \example{\textbf{Variance Term:}} Scales as \(\mathcal{O}(\frac{1}{n}\lambda^{-d/(2s)})\) (assuming eigenvalue decay).
+    \end{itemize}
+
+    \vspace{0.5em}
+    
+    \alert{\textbf{Averaging}} over \(m\) replications yields an excess risk proportional to:
+    \[
+        \frac{\sigma^2}{nm}\lambda^{-d/(2s)} + \lambda^{t/s}
+    \]
+    Once again, the estimator behaves as if we had \(N=nm\) observations.
+    
+\end{frame}
+
+
+\section{Bagging}
+\subsection{The framework}
+
+\begin{frame}
+    \textbf{Setting:} Regression with square loss (extends to convex surrogates).
+    
+    \vspace{0.5em}
+    \textbf{Bootstrap Samples} (\(\mathcal{D}^{(b)}\)): 
+    \begin{itemize}
+        \item Theoretical focus on \(m=\infty\).
+        \item Moderate \(m\) suffices in practice.
+    \end{itemize}
+
+    \vspace{0.5em}
+    \textbf{Impact on Linear Estimators} (e.g., \example{kernel ridge}):
+    \begin{itemize}
+        \item \example{\textbf{Variance:}} Reduced
+        \item \example{\textbf{Bias:}} Unchanged
+    \end{itemize}
+
+    \vspace{0.5em}
+    \alert{\textbf{Key Takeaway:}} Bagging acts as a form of \alert{regularization}. The primary gain is computational rather than statistical.
+\end{frame}
+
+
+\subsection{Example: one-nearest neighbor regression}
+\begin{frame}
+    \textbf{The Bagged Estimator:} 
+    \[
+    \hat{f}(x) = \sum_{i=1}^n V_i y_{(i)}(x)
+    \]
+    \begin{itemize}
+        \item \((x_{(i)}, y_{(i)})\): The \(i\)-th closest neighbor to \(x\).
+        \item \(V_i\): Probability of remaining the \(i\)-th nearest neighbor in a subsample of size \(s \geq 2\).
+    \end{itemize}
+
+    \vspace{0.5em}
+    \textbf{Theoretical Bounds} (Assuming \(f_\star\) is \(B\)-Lipschitz):
+    \begin{itemize}
+        \item \example{\textbf{Variance:}} Bounded by combinatorial argument:\\ 
+        \(\text{var}(\hat{f}(x)) \leq \frac{s}{n}\frac{1}{(1+1/n-s/n)^2}\)
+        
+        \item \example{\textbf{Bias:}} Bounded geometrically:\\ 
+        \(\mathbb{E}[\hat{f}(x)] - f_\star(x) \leq 4B^2\text{diam}(\mathcal{X})^2\frac{1}{s^{2/d}}\)
+    \end{itemize}
+
+    \vspace{0.5em}
+    \begin{block}{Excess Risk \& Balancing}
+        The overall \alert{\textbf{excess risk}} is the sum of these bounds. By choosing an optimal subsample size \(\alert{s^{1+2/d} \propto n}\), this achieves the performance of a well-tuned \(k\)-NN estimator!
+    \end{block}
+\end{frame}
+
+\begin{frame}{}{Example: one-nearest neighbor regression -- picture}
+    \centering
+    \includegraphics[width=0.8\textwidth]{img.png}
+\end{frame}
+
+\makepart{Random projections and averaging}
+\justifying
+\section{The Two Paradigms}
+\subsection{Overview of Data Compression}
+
+\begin{frame}{Data Compression in OLS}
+    \textbf{Context:} Instead of reweighting observations, we can compress the data using random matrices.
+
+    \vspace{0.5em}
+    \textbf{Two Approaches:}
+    \begin{itemize}
+        \item \alert{\textbf{Sketching}} (Row Compression):
+        \begin{itemize}
+            \item Shrinks the number of \textbf{datapoints} (\(n \to s\), where \(n > s > d\)).
+            \item Applies an i.i.d. Gaussian matrix \(S \in \mathbb{R}^{s \times n}\).
+        \end{itemize}
+        
+        \vspace{0.25em}
+        \item \alert{\textbf{Random Projection}} (Column Compression):
+        \begin{itemize}
+            \item Shrinks the number of \textbf{features} (\(d \to s\), where \(d > n > s\)).
+            \item Constrains the search space using \(S \in \mathbb{R}^{d \times s}\).
+        \end{itemize}
+    \end{itemize}
+
+    \vspace{0.5em}
+    \begin{block}{Primary Benefits}
+        \begin{itemize}
+            \item \example{\textbf{Sketching:}} Saves storage and computation time (reducing \(\mathbb{R}^{n \times d}\) to \(\mathbb{R}^{s \times d}\)).
+            \item \example{\textbf{Random Projection:}} Reduces computation time and provides inherent \example{\textbf{regularization}} in high-dimensional setups.
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+
+\section{Gaussian Sketching}
+
+\begin{frame}
+    \textbf{The Sketched Estimator:} 
+    Averaging \(m\) independent sketches (where \(S^{(j)} \in \mathbb{R}^{s \times n}\)):
+    \[
+        \hat{\theta} = \frac{1}{m} \sum_{j=1}^m \hat{\theta}^{(j)} \quad \text{where} \quad \hat{\theta}^{(j)} = (\Phi^\top(S^{(j)})^\top S^{(j)}\Phi)^{-1}\Phi^\top(S^{(j)})^\top S^{(j)}y
+    \]
+    \textit{(Note: This provides an \alert{\textbf{unbiased}} estimator of the true OLS prediction: \(\mathbb{E}[\Phi\hat{\theta}^{(j)}] = \Phi\hat{\theta}_{\text{OLS}}\)).}
+
+    \vspace{0.5em}
+    \textbf{Expected Generalization Error:}
+    \[
+        \text{Error} = \underbrace{\frac{\sigma^2 d}{n}}_{\text{OLS Baseline}} + \underbrace{\frac{\sigma^2 d}{n}\left(\frac{1}{m}\frac{n-d}{s-d-1}\right)}_{\alert{\text{Algorithmic Penalty}}}
+    \]
+
+    \vspace{0.5em}
+    \begin{block}{The Computational Takeaway}
+        \begin{itemize}
+            \item \example{\textbf{Vanishing Penalty:}} As \(m \to \infty\), the algorithmic penalty drops to zero.
+            \item \example{\textbf{Matching OLS:}} To match OLS performance (up to a factor of 2), we need \(m \sim n/s\) replications.
+            \item \alert{\textbf{Conclusion:}} There is \textbf{no statistical gain} over standard OLS. The benefit is purely \textbf{computational}: solving \(m\) tiny \((s \times d)\) datasets in parallel instead of one massive \((n \times d)\) dataset.
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+
+\section{Random Projections}
+\subsection{The High-Dimensional Setting}
+\begin{frame}
+    We now put ourselfs in an high-dimension set-up: assume \(d > n\).
+    \begin{itemize}
+        \item \example{Standard OLS} is \alert{ill-posed} because \(\Phi^\top\Phi\) is not invertible.
+    \end{itemize}
+
+    A possible solution is:
+    \begin{itemize}
+        \item For each \(j = 1,\dots,m\), use \alert{sketching} matrix \(S^{(j)} \in \mathbb{R}^{d \times s}\) (\(s \le n\)), we assume \(\text{rank}(S^{(j)}) = s\) a.s. .
+        \item We \alert{restrict the searching} space considering \(\hat{\theta}^{(j)} = S^{(j)}\hat{\eta}^{(j)}\) where \(\hat{\eta}^{(j)}\) minimizes \(\min_{\eta \in \mathbb{R}^s} \|y - \Phi S^{(j)}\eta\|_2^2\)
+        \item The denoised resposnse vector is \(\hat{y}^{(j)} = \Pi^{(j)} y\), where \(\Pi^{(j)}\) is an \alert{orthogonal projection matrix} onto an \(s\)-dimensional vector space, such that, denoting its expectation \(\Delta = \mathbb{E}[\Pi^{(j)}]\), \(\text{tr}(\Delta) = s\).
+    \end{itemize}
+    
+\end{frame}
+
+\subsection{Expected Excess Risk Bound}
+\begin{frame}
+    \textbf{General Expected Excess Risk:}
+    \[
+        \frac{1}{n} \mathbb{E}_{\varepsilon, S} \left[ \bigg\| \frac{1}{m} \sum_{j=1}^m \hat{y}^{(j)} - \Phi\theta_* \bigg\|_2^2 \right] \le \frac{\sigma^2 s}{n} + \frac{1}{n} \theta_*^\top \Phi^\top H \Phi\theta_*
+    \]
+    \textit{where \(H\) encapsulates the projection geometry:}
+    \[
+        H = I - \Phi \mathbb{E}_S \big[SS^\top\big] \big( \mathbb{E}_S \big[SS^\top \Phi^\top \Phi SS^\top\big] \big)^{-1} \mathbb{E}_S \big[SS^\top\big] \Phi^\top
+    \]
+
+    \vspace{0.5em}
+    \textbf{The Gaussian Case:} 
+    \[
+        \text{Risk} \le \underbrace{\frac{\sigma^2 s}{n}}_{\text{variance}} + \underbrace{\frac{2}{n}\text{tr}(\Phi^\top\Phi)\frac{\|\theta_*\|_2^2}{s+1}}_{\text{bias upper bound}}
+    \]
+    
+    \vspace{0.25em}
+    \begin{block}{The Regularization Effect}
+        The subspace dimension \(s\) acts as an \alert{\textbf{inverse regularization parameter}} (similar to \(1/\lambda\) in Ridge Regression).
+    \end{block}
+\end{frame}
+
+\subsection{Exercise 10.5: Feature Subsampling}
+
+\begin{frame}
+    \textbf{Sparse Random Projections:} Replace the dense Gaussian matrix.
+    \begin{itemize}
+        \item Let \(S \in \mathbb{R}^{d \times s}\) where columns are \alert{\textbf{canonical basis vectors}} \(e_i\).
+        \item This is mathematically identical to randomly \example{\textbf{subsampling \(s\) features}} out of \(d\).
+    \end{itemize}
+
+    \vspace{0.5em}
+    \textbf{Expected Excess Risk Bound} (Evaluating the \(H\) matrix):
+    \[
+        \text{Risk} \le \underbrace{\frac{\sigma^2 s}{n}}_{\text{variance}} + \underbrace{\frac{1}{n} \left( \frac{d}{s} \max_i(\|\phi_i\|_2^2) \|\theta_*\|_2^2 \right)}_{\text{bias upper bound}}
+    \]
+
+    \vspace{0.5em}
+    \begin{block}{Comparison: Sparse vs. Gaussian}
+        \begin{itemize}
+            \item \example{\textbf{Scaling:}} Bias scales as \(\alert{d/s}\) (not \(1/s\)). We need \(s \propto d\) for similar regularization.
+            \item \example{\textbf{Penalty Source:}} Governed by the \alert{maximum column norm} \(\max_i(\|\phi_i\|_2^2)\), rather than the full trace \(\text{tr}(\Phi^\top\Phi)\).
+            \item \example{\textbf{Computation:}} Much faster, it avoids dense \(\mathcal{O}(nd^2)\) matrix multiplications.
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+\section{Extensions: Kernel Methods}
+
+\subsection{Infinite-Dimensional Models and RKHS}
+
+\begin{frame}
+    \textbf{The Kernel Trick:} 
+    Instead of computing infinite-dimensional features \(\varphi(x) \in \mathcal{H}\), we access the space exclusively through the kernel: 
+    \[ k(x, x') = \langle \varphi(x), \varphi(x') \rangle_{\mathcal{H}} \]
+    
+    \vspace{0.25em}
+    \textbf{Representer Theorem:} 
+    The infinite-dimensional risk minimization collapses into a finite span of the data: \(f(x) = \sum_{i=1}^n \alpha_i k(x, x_i)\).
+
+    \vspace{0.5em}
+    \begin{block}{The Matrix Algebra Swap}
+        \begin{itemize}
+            \item \alert{\textbf{The Problem:}} Standard models need the \(d \times d\) covariance matrix \(\Phi^\top\Phi\). Intractable if \(d = \infty\).
+            \item \example{\textbf{The Dual Solution:}} We use the computable \(n \times n\) Kernel matrix \(K = \Phi\Phi^\top\). 
+            \item \example{\textbf{The Parameter Shift:}} We model \(y_* = K\alpha\) and solve for \(n\) scalar weights (\(\alpha\)) instead of \(\infty\) parameters (\(\theta_*\)).
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    \textbf{The Bottleneck:} 
+    Finding weights \(\alpha = (K + \lambda I_n)^{-1}y\) requires inverting an \(n \times n\) matrix, taking \alert{\textbf{\(\mathcal{O}(n^3)\)}} time.
+
+    \vspace{0.5em}
+    \textbf{The Sketching Idea:} 
+    Use a sketch \(\hat{\Phi} \in \mathbb{R}^{n \times s}\) drawn from \(\mathcal{N}(0, K)\). This drops the inversion cost to \(\mathcal{O}(s^3)\), yielding:
+    \[
+        \text{Risk} \le \underbrace{\frac{\sigma^2 s}{n}}_{\text{variance}} + \underbrace{\frac{2}{n}\text{tr}(K)\frac{y_*^\top K^{-1} y_*}{s+1}}_{\text{bias upper bound}}
+    \]
+
+    \vspace{0.5em}
+    \begin{block}{\emphasize{The \(\mathcal{O}(n^3)\) Catch}}
+        Sampling from \(\mathcal{N}(0, K)\) requires computing the matrix square root \(K^{1/2}\), which \textit{also} takes \alert{\textbf{\(\mathcal{O}(n^3)\)}} time. This exact sketching method is computationally useless!
+    \end{block}
+\end{frame}
+
+\subsection{Random Fourier Features (RFF)}
+
+\begin{frame}
+    \alert{\textbf{The Goal:}} Build the \(n \times s\) sketch matrix \(\hat{\Phi}\) \textit{without} ever computing the \(n \times n\) Kernel matrix \(K\).
+
+    \vspace{0.5em}
+    \textbf{The Trick (Bochner's Theorem):} 
+    Translation-invariant kernels can be rewritten as an expected value over random frequencies \(v\):
+    \[
+        k(x, x') = \mathbb{E}_v \big[ \varphi(x, v)\varphi(x', v) \big]
+    \]
+
+    \vspace{0.25em}
+    \textbf{The RFF Algorithm:}
+    Approximate the expectation by sampling \(s\) random frequencies \(v_1, \dots, v_s\). We construct \(\hat{\Phi}\) directly. Each column \(j\) is just our data evaluated at one random frequency: \(\big(\varphi(x_1, v_j), \dots, \varphi(x_n, v_j)\big)^\top\)\footnote{Rahimi and Recht, 2008 propose the use of \(\varphi(x, v) = \sqrt{2}cos(v^\top x + b)\) with $b$ sampled uniformly in $[0, 2\pi]$}.
+    \vspace{0.5em}
+    \begin{block}{\example{The Ultimate Payoff}}
+        By completely bypassing \(K\), we drastically reduce our complexity:
+        \begin{itemize}
+            \item \textbf{Time to build sketch \(\hat{\Phi}\):} \(\mathcal{O}(ns)\)
+            \item \textbf{Time to solve OLS:} \(\mathcal{O}(ns^2)\)
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+\subsection{The Johnson-Lindenstrauss Lemma}
+\begin{frame}
+    Why do random projections work so well geometrically? 
+    
+    The \alert{\textbf{Johnson-Lindenstrauss (JL) Lemma}} states that given \(\varphi_1,...,\varphi_n\;\in \mathbb{R}^d\), let \(S \in \mathbb{R}^{d \times s}\) be a random matrix with independent standard Gaussian variables. Then, for any \(\epsilon \in (0, 1/2)\) and \(\delta \in (0, 1)\), if \(s \ge \frac{6}{\varepsilon^2} \log \frac{n^2}{\delta}\), with probability greater than \(1-\delta\), we have
+    \[
+        \forall i,j \in \{1,...,n\}\;(1-\varepsilon)\|\varphi_i - \varphi_j\|_2^2 \le \|s^{-1/2}S^\top \varphi_i - s^{-1/2}S^\top \varphi_j\|_2^2 \le (1+\varepsilon)\|\varphi_i - \varphi_j\|_2^2
+    \]
+    Crucially, the required projected dimension \(s\) depends \example{\textbf{only logarithmically on \(n\)}} and is completely independent of the original dimension \(d\).
+\end{frame}
+
+
+\end{document}
